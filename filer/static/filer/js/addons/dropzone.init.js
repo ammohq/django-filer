@@ -8,7 +8,7 @@ if (Dropzone) {
 }
 
 /* globals Dropzone, django */
-django.jQuery(function ($) {
+(function ($) {
     var dropzoneTemplateSelector = '.js-filer-dropzone-template';
     var previewImageSelector = '.js-img-preview';
     var dropzoneSelector = '.js-filer-dropzone';
@@ -161,4 +161,4 @@ django.jQuery(function ($) {
             });
         }
     }
-});
+})(django.jQuery);

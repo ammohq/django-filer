@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import logging
 import warnings
 from django import forms
+from django.conf import settings
 from django.contrib.admin.sites import site
 from django.contrib.admin.widgets import ForeignKeyRawIdWidget
 from django.db import models
@@ -88,6 +89,10 @@ class AdminFileWidget(ForeignKeyRawIdWidget):
             ]
         }
         js = (
+            'admin/js/vendor/jquery/jquery{}.js'.format(
+                '' if settings.DEBUG else '.min'
+            ),
+            'admin/js/jquery.init.js',
             'filer/js/libs/dropzone.min.js',
             'filer/js/addons/dropzone.init.js',
             'filer/js/addons/popup_handling.js',

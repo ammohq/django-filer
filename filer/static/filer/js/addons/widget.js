@@ -1,7 +1,7 @@
 'use strict';
 /* global django */
 
-django.jQuery(function ($) {
+(function ($) {
     var filer_clear = function () {
         var clearer = $(this);
         var container = clearer.closest('.filerFile');
@@ -25,4 +25,4 @@ django.jQuery(function ($) {
     //if this file is included multiple time, we ensure that filer_clear is attached only once.
     $(document).off('click.filer', '.filerFile .filerClearer', filer_clear)
                .on('click.filer', '.filerFile .filerClearer', filer_clear);
-});
+})(django.jQuery);
