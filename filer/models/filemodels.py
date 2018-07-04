@@ -5,19 +5,18 @@ from __future__ import absolute_import, unicode_literals
 import hashlib
 import os
 from datetime import datetime
-
 from django.conf import settings
-from django.core import urlresolvers
 from django.core.files.base import ContentFile
 from django.db import models
+from django.urls import reverse, NoReverseMatch
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from . import mixins
+from .foldermodels import Folder
 from .. import settings as filer_settings
 from ..fields.multistorage_file import MultiStorageFileField
 from ..utils.compatibility import python_2_unicode_compatible
-from .foldermodels import Folder
 
 try:
     from polymorphic.models import PolymorphicModel
@@ -38,7 +37,8 @@ class FileManager(PolymorphicManager):
         return r
 
     def find_duplicates(self, file_obj):
-        return [i for i in self.exclude(pk=file_obj.pk).filter(sha1=file_obj.sha1)]
+        return [i for i in
+                self.exclude(pk=file_obj.pk).filter(sha1=file_obj.sha1)]
 
 
 def is_public_default():
@@ -53,24 +53,35 @@ class File(PolymorphicModel, mixins.IconsMixin):
     _icon = "file"
     _file_data_changed_hint = None
 
-    folder = models.ForeignKey(Folder, verbose_name=_('folder'), related_name='all_files',
-        null=True, blank=True)
-    file = MultiStorageFileField(_('file'), null=True, blank=True, max_length=255)
+    folder = models.ForeignKey(
+        Folder,
+        verbose_name=_('folder'),
+        related_name='all_files',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+
+    file = MultiStorageFileField(_('file'), null=True, blank=True,
+                                 max_length=255)
     _file_size = models.BigIntegerField(_('file size'), null=True, blank=True)
 
     sha1 = models.CharField(_('sha1'), max_length=40, blank=True, default='')
 
-    has_all_mandatory_data = models.BooleanField(_('has all mandatory data'), default=False, editable=False)
+    has_all_mandatory_data = models.BooleanField(_('has all mandatory data'),
+                                                 default=False, editable=False)
 
-    original_filename = models.CharField(_('original filename'), max_length=255, blank=True, null=True)
+    original_filename = models.CharField(_('original filename'), max_length=255,
+                                         blank=True, null=True)
     name = models.CharField(max_length=255, default="", blank=True,
-        verbose_name=_('name'))
+                            verbose_name=_('name'))
     description = models.TextField(null=True, blank=True,
-        verbose_name=_('description'))
+                                   verbose_name=_('description'))
 
     owner = models.ForeignKey(getattr(settings, 'AUTH_USER_MODEL', 'auth.User'),
-        related_name='owned_%(class)ss', on_delete=models.SET_NULL,
-        null=True, blank=True, verbose_name=_('owner'))
+                              related_name='owned_%(class)ss',
+                              on_delete=models.SET_NULL,
+                              null=True, blank=True, verbose_name=_('owner'))
 
     uploaded_at = models.DateTimeField(_('uploaded at'), auto_now_add=True)
     modified_at = models.DateTimeField(_('modified at'), auto_now=True)
@@ -149,7 +160,7 @@ class File(PolymorphicModel, mixins.IconsMixin):
         # hint file_data_changed callback that data is actually unchanged
         self._file_data_changed_hint = False
         self.file = dst_storage.save(dst_file_name,
-            ContentFile(src_file.read()))
+                                     ContentFile(src_file.read()))
         src_storage.delete(src_file_name)
 
     def _copy_file(self, destination, overwrite=False):
@@ -198,14 +209,17 @@ class File(PolymorphicModel, mixins.IconsMixin):
             self._move_file()
             self._old_is_public = self.is_public
         super(File, self).save(*args, **kwargs)
+
     save.alters_data = True
 
     def delete(self, *args, **kwargs):
         # Delete the model before the file
         super(File, self).delete(*args, **kwargs)
         # Delete the file if there are no other Files referencing it.
-        if not File.objects.filter(file=self.file.name, is_public=self.is_public).exists():
+        if not File.objects.filter(file=self.file.name,
+                                   is_public=self.is_public).exists():
             self.file.delete(False)
+
     delete.alters_data = True
 
     @property
@@ -254,7 +268,7 @@ class File(PolymorphicModel, mixins.IconsMixin):
         return text
 
     def get_admin_change_url(self):
-        return urlresolvers.reverse(
+        return reverse(
             'admin:{0}_{1}_change'.format(
                 self._meta.app_label,
                 self._meta.model_name,
@@ -269,8 +283,8 @@ class File(PolymorphicModel, mixins.IconsMixin):
         except AttributeError:
             # Django >1.6
             model_name = self._meta.model_name
-        return urlresolvers.reverse(
-            'admin:{0}_{1}_delete'.format(self._meta.app_label, model_name,),
+        return reverse(
+            'admin:{0}_{1}_delete'.format(self._meta.app_label, model_name, ),
             args=(self.pk,))
 
     @property
@@ -287,20 +301,22 @@ class File(PolymorphicModel, mixins.IconsMixin):
     @property
     def canonical_time(self):
         if settings.USE_TZ:
-            return int((self.uploaded_at - datetime(1970, 1, 1, 1, tzinfo=timezone.utc)).total_seconds())
+            return int((self.uploaded_at - datetime(1970, 1, 1, 1,
+                                                    tzinfo=timezone.utc)).total_seconds())
         else:
-            return int((self.uploaded_at - datetime(1970, 1, 1, 1)).total_seconds())
+            return int(
+                (self.uploaded_at - datetime(1970, 1, 1, 1)).total_seconds())
 
     @property
     def canonical_url(self):
         url = ''
         if self.file and self.is_public:
             try:
-                url = urlresolvers.reverse('canonical', kwargs={
+                url = reverse('canonical', kwargs={
                     'uploaded_at': self.canonical_time,
                     'file_id': self.id
                 })
-            except urlresolvers.NoReverseMatch:
+            except NoReverseMatch:
                 pass  # No canonical url, return empty string
         return url
 

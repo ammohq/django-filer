@@ -3,13 +3,12 @@ from __future__ import absolute_import
 
 import logging
 import warnings
-
 from django import forms
 from django.contrib.admin.sites import site
 from django.contrib.admin.widgets import ForeignKeyRawIdWidget
-from django.core.urlresolvers import reverse
 from django.db import models
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 
@@ -54,7 +53,8 @@ class AdminFileWidget(ForeignKeyRawIdWidget):
         # rendering the super for ForeignKeyRawIdWidget on purpose here because
         # we only need the input and none of the other stuff that
         # ForeignKeyRawIdWidget adds
-        hidden_input = super(ForeignKeyRawIdWidget, self).render(name, value, attrs)
+        hidden_input = super(ForeignKeyRawIdWidget, self).render(name, value,
+                                                                 attrs)
         context = {
             'hidden_input': hidden_input,
             'lookup_url': '%s%s' % (related_url, lookup_url),
@@ -98,14 +98,16 @@ class AdminFileWidget(ForeignKeyRawIdWidget):
 class AdminFileFormField(forms.ModelChoiceField):
     widget = AdminFileWidget
 
-    def __init__(self, rel, queryset, to_field_name, *args, **kwargs):
-        self.rel = rel
+    def __init__(self, remote_field, queryset, to_field_name, *args, **kwargs):
+        self.remote_field = remote_field
         self.queryset = queryset
         self.to_field_name = to_field_name
         self.max_value = None
         self.min_value = None
         kwargs.pop('widget', None)
-        super(AdminFileFormField, self).__init__(queryset, widget=self.widget(rel, site), *args, **kwargs)
+        super(AdminFileFormField, self).__init__(
+            queryset, widget=self.widget(remote_field, site), *args, **kwargs
+        )
 
     def widget_attrs(self, widget):
         widget.required = self.required
@@ -134,7 +136,7 @@ class FilerFileField(models.ForeignKey):
         # while letting the caller override them.
         defaults = {
             'form_class': self.default_form_class,
-            'rel': self.rel,
+            'remote_field': self.remote_field,
         }
         defaults.update(kwargs)
         return super(FilerFileField, self).formfield(**defaults)

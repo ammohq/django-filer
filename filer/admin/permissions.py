@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 
 from django.contrib import admin
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 
 class PrimitivePermissionAwareModelAdmin(admin.ModelAdmin):
@@ -34,4 +34,4 @@ class PrimitivePermissionAwareModelAdmin(admin.ModelAdmin):
         opts = obj._meta
         return reverse('admin:%s_%s_changelist' %
                        (opts.app_label, opts.model_name),
-            current_app=self.admin_site.name)
+                       current_app=self.admin_site.name)
