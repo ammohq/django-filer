@@ -5,7 +5,7 @@ import sys
 
 import django
 from django.utils import six
-from django.utils.functional import allow_lazy
+from django.utils.functional import keep_lazy
 from django.utils.text import Truncator
 
 
@@ -13,14 +13,14 @@ def truncate_words(s, num, end_text='...'):
     # truncate_words was removed in Django 1.5.
     truncate = end_text and ' %s' % end_text or ''
     return Truncator(s).words(num, truncate=truncate)
-truncate_words = allow_lazy(truncate_words, six.text_type)
 
+
+truncate_words = keep_lazy(truncate_words, six.text_type)
 
 LTE_DJANGO_1_8 = django.VERSION < (1, 9)
 LTE_DJANGO_1_9 = django.VERSION < (1, 10)
 GTE_DJANGO_1_10 = django.VERSION >= (1, 10)
 DJANGO_1_10 = django.VERSION[:2] == (1, 10)
-
 
 if not six.PY3:
     fs_encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
@@ -39,6 +39,8 @@ def upath(path):
 # copied from django-cms (for compatibility with Django 1.4)
 try:
     from django.utils.encoding import force_unicode  # flake8: noqa
+
+
     def python_2_unicode_compatible(klass):
         """
         A decorator that defines __unicode__ and __str__ methods under Python 2.
@@ -52,7 +54,8 @@ try:
         return klass
 except ImportError:
     force_unicode = lambda s: str(s)
-    from django.utils.encoding import python_2_unicode_compatible  # flake8: noqa
+    from django.utils.encoding import \
+        python_2_unicode_compatible  # flake8: noqa
 
 
 def get_delete_permission(opts):
@@ -64,18 +67,20 @@ def get_delete_permission(opts):
         return '%s.%s' % (opts.app_label,
                           opts.get_delete_permission())
 
+
 try:
-    from django.contrib.admin.utils import unquote, quote, NestedObjects, capfirst  # flake8: noqa
+    from django.contrib.admin.utils import unquote, quote, NestedObjects, \
+        capfirst  # flake8: noqa
 except ImportError:
     # django < 1.7
-    from django.contrib.admin.util import unquote, quote, NestedObjects, capfirst  # flake8: noqa
+    from django.contrib.admin.util import unquote, quote, NestedObjects, \
+        capfirst  # flake8: noqa
 
 try:
     from importlib import import_module  # flake8: noqa
 except ImportError:
     # python < 2.7
     from django.utils.importlib import import_module  # flake8: noqa
-
 
 try:
     from PIL import Image as PILImage
