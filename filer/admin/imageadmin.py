@@ -2,14 +2,14 @@
 from __future__ import absolute_import
 
 from django import forms
-from django.utils.translation import string_concat
+from django.utils.text import format_lazy
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
+from .fileadmin import FileAdmin
 from ..settings import FILER_IMAGE_MODEL
 from ..thumbnail_processors import normalize_subject_location
 from ..utils.loader import load_model
-from .fileadmin import FileAdmin
 
 Image = load_model(FILER_IMAGE_MODEL)
 
@@ -60,7 +60,7 @@ class ImageAdminForm(forms.ModelForm):
             err_code = 'invalid_subject_format'
 
         elif (coordinates[0] > self.instance.width or
-                coordinates[1] > self.instance.height):
+              coordinates[1] > self.instance.height):
             err_msg = ugettext_lazy(
                 'Subject location is outside of the image. ')
             err_code = 'subject_out_of_bounds'
@@ -69,10 +69,14 @@ class ImageAdminForm(forms.ModelForm):
 
         self._set_previous_subject_location(cleaned_data)
         raise forms.ValidationError(
-            string_concat(
+            format_lazy(
+                '{}{}{}',
                 err_msg,
-                ugettext_lazy('Your input: "{subject_location}". '.format(
-                    subject_location=subject_location)),
+                ugettext_lazy(
+                    'Your input: "{subject_location}". '.format(
+                        subject_location=subject_location
+                    )
+                ),
                 'Previous value is restored.'),
             code=err_code)
 
