@@ -1,8 +1,12 @@
-{% extends "admin/filer/base_site.html" %}
+{% load static %}
+<html>
+<head>
+<script type="text/javascript" src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/vendor/jquery.init.js' %}"></script>
+<script type="text/javascript" src="{% static 'filer/js/addons/popup_handling.js' %}"></script>
 
-{% block extrahead %}
-    {{ block.super }}
-    <script type="text/javascript">
-        opener.dismissPopupAndReload(window);
-    </script>
-{% endblock %}
+<script type="text/javascript">
+  opener.dismissPopupAndReload(window);
+</script>
+</head>
+</html>
